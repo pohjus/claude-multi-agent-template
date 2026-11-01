@@ -143,7 +143,9 @@ claude --agent orchestrator
 
 The first time you open Claude Code in a new folder, it asks whether you trust the folder.
 Answer yes.
-Until you do, the guard hooks do not run.
+
+Each step below takes a minute or two while the agents work.
+The whole feature takes about 5 minutes, plus the time you spend reading.
 
 ## Step 5: ask for your first feature
 
@@ -203,6 +205,10 @@ The most important part is the acceptance criteria, for example:
 3. [test] Passing a string throws a TypeError.
 4. [review] The function is exported by name from src/convert.js.
 ```
+
+Your real plan will be longer.
+In our test run, the planner wrote 16 criteria for this small function, covering cases such as `NaN`, `Infinity`, and negative numbers.
+That is normal: the planner tries to pin down every edge case before any code exists.
 
 * `[test]` criteria are about behaviour, so they become automated tests.
 * `[review]` criteria are about how the code is written, so the reviewer checks them by reading the code.
@@ -328,12 +334,13 @@ For a typo, skip both: start plain `claude` and just ask.
 
 ## How the guards protect you
 
-Every time an agent tries to write a file or run a shell command, a hook checks it first:
+Every time an agent tries to write a file or run a shell command, a hook checks it first.
+The hook knows which agent is asking and looks up that agent's rules in `.claude/workflow.json`:
 
 ```mermaid
 sequenceDiagram
     participant A as planner-agent
-    participant H as guard-paths.js
+    participant H as guard.js
     participant F as File system
 
     A->>H: I want to write docs/plans/feature.md
@@ -371,6 +378,15 @@ That is why you still read `git diff` before every commit.
 2. **Steer with feedback.** At checkpoint A, add a criterion of your own, such as "negative values must work". Check that it appears in the updated plan and later as a test.
 3. **Try the full workflow.** Ask for the three unit command line program from the full workflow section. At the design checkpoint, compare the three designs and pick one with `APPROVE n`. Explain your choice to a classmate.
 4. **Follow the trail.** Open `.claude/logs/tool-calls.log`. Find which agent wrote each file and when the tests were run.
+5. **Test a guard yourself.** Hooks are ordinary programs that read a JSON description of the action from standard input. Pretend to be the planner trying to write code:
+
+   ```sh
+   echo '{"agent_type":"planner-agent","tool_name":"Write","tool_input":{"file_path":"src/app.js"}}' \
+     | CLAUDE_PROJECT_DIR="$PWD" node .claude/hooks/guard.js
+   echo "exit code: $?"
+   ```
+
+   You should see a `Blocked:` message and exit code 2, which tells Claude Code to stop the action. Change the path to `docs/plans/app.md` and run it again: now the exit code is 0.
 
 ## Common problems
 
@@ -385,9 +401,9 @@ Usually it should not, and the orchestrator will ask you what to do.
 The test files are named so that the test runner cannot find them.
 Check the test file naming line in `CLAUDE.md`.
 
-**Nothing seems to be blocked, ever.**
-You probably did not accept the trust prompt.
-Restart Claude Code in the project folder and answer yes.
+**Nothing is ever blocked.**
+That is normal: the agents' instructions already keep them inside their areas, so the guards rarely need to step in.
+To see a guard work, do exercise 5.
 
 **The orchestrator wrote code itself.**
 It cannot: it has no tool for writing files.

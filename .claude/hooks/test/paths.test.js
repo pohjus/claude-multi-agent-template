@@ -1,6 +1,6 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
-const { isAllowedPath } = require("../guard-paths");
+const { isAllowedPath } = require("../lib/paths");
 const { resolveFolders } = require("../lib/config");
 
 const PROJECT = "/project";
@@ -8,7 +8,7 @@ const CONFIG = {
   paths: { src: "src", tests: "tests/", reports: "docs/reports" },
 };
 
-describe("guard-paths", () => {
+describe("paths", () => {
   it("allows files inside an allowed folder", () => {
     assert.equal(isAllowedPath("src/a.js", PROJECT, ["src"]), true);
     assert.equal(isAllowedPath("/project/src/a/b.js", PROJECT, ["src"]), true);

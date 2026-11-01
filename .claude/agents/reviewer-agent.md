@@ -3,17 +3,11 @@ name: reviewer-agent
 description: Reviews finished code for correctness, security, and readability. Final step before human sign off.
 tools: Read, Grep, Glob, Write
 model: opus
-hooks:
-  PreToolUse:
-    - matcher: "Write|Edit"
-      hooks:
-        - type: command
-          command: node "$CLAUDE_PROJECT_DIR/.claude/hooks/guard-paths.js" reports
 ---
-Review every changed and new file in the `git status --short` output you
-are given. Use the `git diff` output you are given to see what changed in
-modified files; read new files in full. Check the code against the plan, or against the spec and the
-chosen design.
+Review every changed and new file in the `git status --short -uall` output
+you are given. Use the `git diff` output to see what changed in modified
+files. New files (`??`) are not in the diff, so read them in full.
+Check the code against the plan, or against the spec and the chosen design.
 
 Check every acceptance criterion:
 * [review] criteria: say whether the code meets each one.

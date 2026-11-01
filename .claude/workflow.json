@@ -7,5 +7,14 @@
     "design": "docs/design",
     "reports": "docs/reports"
   },
-  "testCommand": "node --test"
+  "testCommand": "node --test",
+  "agents": {
+    "orchestrator": { "write": [], "bash": ["test", "git"] },
+    "planner-agent": { "write": ["plans"], "bash": [] },
+    "requirements-agent": { "write": ["requirements"], "bash": [] },
+    "architect-agent": { "write": ["design"], "bash": [] },
+    "implementer-agent": { "write": ["src", "tests"], "bash": ["test"] },
+    "tester-agent": { "write": ["tests", "reports"], "bash": ["test"] },
+    "reviewer-agent": { "write": ["reports"], "bash": [] }
+  }
 }

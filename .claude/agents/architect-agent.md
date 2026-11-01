@@ -3,12 +3,6 @@ name: architect-agent
 description: Full workflow. Reads an approved spec and proposes three solution designs with tradeoffs. Use after requirements are approved.
 tools: Read, Grep, Glob, Write
 model: opus
-hooks:
-  PreToolUse:
-    - matcher: "Write|Edit"
-      hooks:
-        - type: command
-          command: node "$CLAUDE_PROJECT_DIR/.claude/hooks/guard-paths.js" design
 ---
 Read the spec you are given and the existing code it touches.
 Propose exactly three designs, numbered 1 to 3, that fit the project stack

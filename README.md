@@ -55,7 +55,8 @@ Keep the `# Workflow` section as it is.
 
 ### 2. Set folders and the test command in `.claude/workflow.json`
 
-The hooks read this file, so the agent files never need to change when folders change.
+The guard hook reads this file: the folders, the test command, and what each agent may do.
+The agent files never need to change when folders change.
 
 Node.js:
 
@@ -133,10 +134,9 @@ Gradle also writes to `~/.gradle` and downloads dependencies, so add this to the
 
 If the build still fails inside the sandbox, add `"excludedCommands": ["./gradlew *"]` to the same block; that runs Gradle outside the sandbox.
 
-### 4. Trust the folder and commit
+### 4. Commit
 
-Start `claude` once in the project folder and accept the workspace trust prompt.
-Until you do, the hooks in the agent files do not run and the guards are off.
+The guards run from `.claude/settings.json`, so they work as soon as the files are in place.
 
 ```sh
 git add CLAUDE.md .claude
@@ -230,7 +230,7 @@ The `[review]` criteria are about code structure, and the reviewer checks them b
 
 | Agent | Writes to | Shell |
 | --- | --- | --- |
-| `orchestrator` | nothing | test command, `git status --short`, `git diff`, `git diff --stat` |
+| `orchestrator` | nothing | test command, `git status --short -uall`, `git diff`, `git diff --stat` |
 | `planner-agent` | `docs/plans` | none |
 | `requirements-agent` | `docs/requirements` | none |
 | `architect-agent` | `docs/design` | none |
@@ -238,7 +238,20 @@ The `[review]` criteria are about code structure, and the reviewer checks them b
 | `tester-agent` | `tests`, `docs/reports` | test command |
 | `reviewer-agent` | `docs/reports` | none |
 
-The folder names in this table are the defaults from `.claude/workflow.json`.
+These rules live in the `agents` block of `.claude/workflow.json`:
+
+```json
+"agents": {
+  "orchestrator": { "write": [], "bash": ["test", "git"] },
+  "planner-agent": { "write": ["plans"], "bash": [] },
+  "implementer-agent": { "write": ["src", "tests"], "bash": ["test"] }
+}
+```
+
+`write` lists folder keys from `paths`.
+`bash` may contain `test` for the test command and `git` for the read only git commands.
+One hook, `.claude/hooks/guard.js`, checks every Write, Edit, and Bash call against these rules, using the agent name Claude Code passes to the hook.
+A plain `claude` session and agents not listed in `agents` are not restricted.
 Subagents cannot start other subagents, because `Agent` is not in their `tools`.
 
 ## Customize
@@ -250,17 +263,15 @@ Edit the `model` field in the agent's front matter in `.claude/agents/`, for exa
 ### Add an agent
 
 1. Copy an existing file in `.claude/agents/` and change `name`, `description`, `tools`, and the instructions.
-2. If it writes files, add a folder key to `paths` in `.claude/workflow.json`.
-3. Pass that key to the path guard in the agent's front matter:
+2. If it writes into a new folder, add a folder key to `paths` in `.claude/workflow.json`.
+3. Add the agent's rules to `agents` in `.claude/workflow.json`, using the same name as in its front matter:
 
-   ```yaml
-   hooks:
-     PreToolUse:
-       - matcher: "Write|Edit"
-         hooks:
-           - type: command
-             command: node "$CLAUDE_PROJECT_DIR/.claude/hooks/guard-paths.js" mykey
+   ```json
+   "my-agent": { "write": ["mykey"], "bash": [] }
    ```
+
+   Without this entry the agent is not restricted at all.
+   The hook tests fail if an agent in `.claude/agents/` has no entry, so run them after adding one.
 
 4. In `.claude/agents/orchestrator.md`, add the agent to the `Agent(...)` list in `tools` and to a workflow; otherwise the orchestrator cannot call it.
 
@@ -275,16 +286,16 @@ Edit the steps or checkpoints there; no code changes are needed.
 
 The agent tried to write outside its folders or to run a command it is not allowed to run.
 Usually this is correct, and the agent reports the problem back instead of working around it.
-If the agent really needs that folder, add its key to the agent's `guard-paths.js` line.
+If the agent really needs that folder, add its key to the agent's `write` list in `.claude/workflow.json`.
 
 ### Every write is blocked with `unknown path key`
 
-An agent file names a folder key that does not exist in `.claude/workflow.json`.
-Fix the key in one of the two files.
+An agent's `write` list in `.claude/workflow.json` names a key that does not exist in `paths`.
+Run the hook tests to find it.
 
 ### The guards do not seem to run
 
-Accept the workspace trust prompt for the project folder; agent hooks only run in trusted folders.
+Check that `.claude/settings.json` still has the `guard.js` hook, and that the agent's name in its front matter matches its entry in `agents`.
 
 ### See what the agents did
 
