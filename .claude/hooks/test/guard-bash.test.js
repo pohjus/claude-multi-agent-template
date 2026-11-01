@@ -2,8 +2,8 @@ const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 const { isAllowedCommand } = require("../guard-bash");
 
-const allowed = (command, testCommand = "node --test") =>
-  isAllowedCommand(command, testCommand, "tests");
+const allowed = (command, testCommand = "node --test", allowGit = false) =>
+  isAllowedCommand(command, testCommand, "tests", allowGit);
 
 describe("guard-bash", () => {
   it("allows the test command alone", () => {
@@ -30,8 +30,14 @@ describe("guard-bash", () => {
     "node --test > out.txt",
     "node --test $(whoami)",
     "node --test\nrm -rf src",
+    "node --test\ttests",
+    "node --test tests/{a,..}/src/x.js",
+    "node --test tests/*",
+    "node --test tests/~",
+    "node --test tests/!x",
+    'node --test "tests/a.js"',
   ].forEach((command) => {
-    it(`blocks shell operators in ${JSON.stringify(command)}`, () => {
+    it(`blocks unsafe characters in ${JSON.stringify(command)}`, () => {
       assert.equal(allowed(command), false);
     });
   });
@@ -47,4 +53,18 @@ describe("guard-bash", () => {
       assert.equal(allowed(command), false);
     });
   });
+
+  it("blocks git commands unless git is allowed", () => {
+    assert.equal(allowed("git status --short"), false);
+    assert.equal(allowed("git status --short", "node --test", true), true);
+    assert.equal(allowed("git diff --stat", "node --test", true), true);
+  });
+
+  ["git commit -m x", "git push", "git diff src", "git status"].forEach(
+    (command) => {
+      it(`blocks ${JSON.stringify(command)} even when git is allowed`, () => {
+        assert.equal(allowed(command, "node --test", true), false);
+      });
+    },
+  );
 });

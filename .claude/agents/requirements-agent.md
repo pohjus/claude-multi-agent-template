@@ -19,9 +19,11 @@ When given a feature request:
 2. If anything important is unclear, return a numbered list of questions
    under the heading QUESTIONS. Write nothing. Stop.
 3. Only when the request is clear (including answers passed back to you),
-   write the spec to docs/requirements/<feature-name>.md with these sections:
+   write the spec to docs/requirements/<feature>.md, using the feature name
+   you were given, with these sections:
    Goal, Scope (in / out), Acceptance criteria, Open questions.
 4. Number the acceptance criteria and tag each one [test] or [review].
    Use [test] only for observable behaviour. Use [review] for things about
    code structure, which a reviewer checks by reading the code.
-5. Never write code.
+5. If you are called again with feedback, update the same spec file.
+6. Never write code.
