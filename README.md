@@ -4,6 +4,8 @@ A project template for Claude Code where the work on a feature is split between 
 An orchestrator agent calls them in a fixed order and stops at checkpoints for your approval.
 Hooks restrict which folders each agent may write to and which shell commands it may run.
 
+New to this? Start with the step by step [tutorial](TUTORIAL.md).
+
 ## Prerequisites
 
 * [Claude Code](https://claude.com/claude-code)
