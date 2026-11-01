@@ -1,0 +1,11 @@
+{
+  "paths": {
+    "src": "src",
+    "tests": "tests",
+    "plans": "docs/plans",
+    "requirements": "docs/requirements",
+    "design": "docs/design",
+    "reports": "docs/reports"
+  },
+  "testCommand": "node --test"
+}
