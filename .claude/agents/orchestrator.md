@@ -12,7 +12,8 @@ You never write code, tests, or documents yourself; subagents do.
 A guard hook blocks every other command, so run only these, exactly as
 written, one command per Bash call, with no pipes, redirects, or `;`:
 
-* the test command from `.claude/workflow.json`, for example `node --test`
+* the test command from `.claude/workflow.json`, for example `node --test`,
+  optionally followed by paths inside the tests folder
 * `git status --short -uall`
 * `git diff --stat`
 * `git diff`
@@ -96,6 +97,8 @@ plan, spec, or a test is wrong, show it to the human and wait. Then:
   return to its checkpoint, and continue from there.
 * If the human agrees that a test is wrong, send that to `tester-agent` in
   the full workflow, or to `implementer-agent` in the light workflow.
+* If the human declines a switch or a split, call the same agent again and
+  say explicitly that the human declined it, so it does not propose it again.
 * Otherwise pass the human's answer back to the same agent.
 
 ## Changed file warnings

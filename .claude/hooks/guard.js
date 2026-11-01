@@ -22,27 +22,55 @@ const checkWrite = (input, rules, config, projectDir) => {
   );
 };
 
+const describeAllowed = (allowTest, allowGit, config, testDir) => {
+  const options = [];
+  if (allowTest) {
+    options.push(
+      `"${config.testCommand}", optionally with paths inside ${testDir}/`,
+    );
+  }
+  if (allowGit) {
+    options.push(...GIT_READ_COMMANDS.map((command) => `"${command}"`));
+  }
+  return options.join(", or ");
+};
+
 const checkBash = (input, rules, config) => {
   const allowed = rules.bash ?? [];
-  if (!allowed.includes("test")) {
+  if (allowed.length === 0) {
     return "you may not run shell commands. Report this to the caller.";
   }
+  if (input.tool_input?.dangerouslyDisableSandbox) {
+    return "commands may not disable the sandbox. Report this to the caller.";
+  }
   const [testDir] = resolveFolders(config, ["tests"]);
+  const allowTest = allowed.includes("test");
   const allowGit = allowed.includes("git");
   const command = input.tool_input?.command ?? "";
-  if (isAllowedCommand(command, config.testCommand, testDir, allowGit)) {
+  const options = { allowTest, allowGit };
+  if (isAllowedCommand(command, config.testCommand, testDir, options)) {
     return null;
   }
-  const extra = allowGit ? `, or one of: ${GIT_READ_COMMANDS.join(", ")}` : "";
+  const allowedText = describeAllowed(allowTest, allowGit, config, testDir);
   return (
-    `you may only run "${config.testCommand}", optionally with paths ` +
-    `inside ${testDir}/${extra}. One command per call; only letters, ` +
+    `you may only run ${allowedText}. One command per call; only letters, ` +
     "digits, spaces, and . / _ - are allowed."
   );
 };
 
+const hasAgentRules = (config) =>
+  typeof config.agents === "object" &&
+  config.agents !== null &&
+  !Array.isArray(config.agents);
+
 const findViolation = (input, config, projectDir) => {
-  const rules = config.agents?.[input.agent_type];
+  if (!input.agent_type) {
+    return null;
+  }
+  if (!hasAgentRules(config)) {
+    return "workflow.json has no agents block, blocking to be safe.";
+  }
+  const rules = config.agents[input.agent_type];
   if (!rules) {
     return null;
   }

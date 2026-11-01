@@ -1,6 +1,11 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
+const path = require("node:path");
 const { findViolation } = require("../guard");
+
+const GUARD = path.join(__dirname, "..", "guard.js");
+const TEMPLATE_ROOT = path.join(__dirname, "..", "..", "..");
 
 const PROJECT = "/project";
 const CONFIG = {
@@ -10,6 +15,7 @@ const CONFIG = {
     orchestrator: { write: [], bash: ["test", "git"] },
     "planner-agent": { write: ["plans"], bash: [] },
     "implementer-agent": { write: ["src", "tests"], bash: ["test"] },
+    "git-agent": { write: [], bash: ["git"] },
   },
 };
 
@@ -76,5 +82,56 @@ describe("guard", () => {
   it("ignores tools that do not write or run commands", () => {
     const input = { agent_type: "planner-agent", tool_name: "Read" };
     assert.equal(check(input), null);
+  });
+
+  it("allows git but not the test command for a git only agent", () => {
+    assert.equal(check(bash("git-agent", "git diff")), null);
+    assert.match(check(bash("git-agent", "node --test")), /may only run/);
+  });
+
+  it("blocks commands that disable the sandbox", () => {
+    const input = bash("implementer-agent", "node --test");
+    input.tool_input.dangerouslyDisableSandbox = true;
+    assert.match(check(input), /disable the sandbox/);
+  });
+
+  it("blocks agents when the agents block is missing", () => {
+    const config = { ...CONFIG, agents: undefined };
+    const input = write("planner-agent", "docs/plans/a.md");
+    assert.match(findViolation(input, config, PROJECT), /no agents block/);
+    assert.equal(findViolation(write(undefined, "x"), config, PROJECT), null);
+  });
+});
+
+describe("guard.js as a hook process", () => {
+  const runHook = (input) =>
+    spawnSync(process.execPath, [GUARD], {
+      input: JSON.stringify(input),
+      encoding: "utf8",
+      env: { ...process.env, CLAUDE_PROJECT_DIR: TEMPLATE_ROOT },
+    });
+
+  it("exits with 2 and a Blocked message for a forbidden write", () => {
+    const result = runHook(write("planner-agent", "src/x.js"));
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /^Blocked: src\/x\.js is outside/);
+  });
+
+  it("exits with 0 for an allowed write", () => {
+    const result = runHook(write("planner-agent", "docs/plans/x.md"));
+    assert.equal(result.status, 0);
+  });
+
+  it("exits with 0 for the main session", () => {
+    const result = runHook(write(undefined, "src/x.js"));
+    assert.equal(result.status, 0);
+  });
+
+  it("exits with 2 on malformed input", () => {
+    const result = spawnSync(process.execPath, [GUARD], {
+      input: "not json",
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 2);
   });
 });

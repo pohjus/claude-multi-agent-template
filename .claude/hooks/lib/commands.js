@@ -25,7 +25,8 @@ const isTestCommand = (words, testCommand, testDir) => {
   );
 };
 
-const isAllowedCommand = (command, testCommand, testDir, allowGit = false) => {
+const isAllowedCommand = (command, testCommand, testDir, options = {}) => {
+  const { allowTest = true, allowGit = false } = options;
   const trimmed = command.trim();
   if (!SAFE_COMMAND.test(trimmed)) {
     return false;
@@ -33,7 +34,7 @@ const isAllowedCommand = (command, testCommand, testDir, allowGit = false) => {
   if (allowGit && GIT_READ_COMMANDS.includes(trimmed)) {
     return true;
   }
-  return isTestCommand(trimmed.split(/ +/), testCommand, testDir);
+  return allowTest && isTestCommand(trimmed.split(/ +/), testCommand, testDir);
 };
 
 module.exports = { isAllowedCommand, GIT_READ_COMMANDS };

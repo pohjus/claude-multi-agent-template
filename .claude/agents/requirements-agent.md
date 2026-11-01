@@ -10,6 +10,7 @@ everything you return goes back to whoever called you.
 When given a feature request:
 1. If it contains more than one feature that could ship on its own,
    return a proposal to split it. Write nothing. Stop.
+   Skip this step if the caller says the human declined the split.
 2. If anything important is unclear, return a numbered list of questions
    under the heading QUESTIONS. Write nothing. Stop.
 3. Only when the request is clear (including answers passed back to you),

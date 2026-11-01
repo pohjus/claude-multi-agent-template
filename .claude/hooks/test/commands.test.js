@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const { isAllowedCommand } = require("../lib/commands");
 
 const allowed = (command, testCommand = "node --test", allowGit = false) =>
-  isAllowedCommand(command, testCommand, "tests", allowGit);
+  isAllowedCommand(command, testCommand, "tests", { allowGit });
 
 describe("commands", () => {
   it("allows the test command alone", () => {
@@ -61,6 +61,18 @@ describe("commands", () => {
       true,
     );
     assert.equal(allowed("git diff --stat", "node --test", true), true);
+  });
+
+  it("blocks the test command when only git is allowed", () => {
+    const options = { allowTest: false, allowGit: true };
+    assert.equal(
+      isAllowedCommand("node --test", "node --test", "tests", options),
+      false,
+    );
+    assert.equal(
+      isAllowedCommand("git diff", "node --test", "tests", options),
+      true,
+    );
   });
 
   [

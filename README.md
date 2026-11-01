@@ -58,53 +58,27 @@ Keep the `# Workflow` section as it is.
 The guard hook reads this file: the folders, the test command, and what each agent may do.
 The agent files never need to change when folders change.
 
-Node.js:
-
-```json
-{
-  "paths": {
-    "src": "src",
-    "tests": "tests",
-    "plans": "docs/plans",
-    "requirements": "docs/requirements",
-    "design": "docs/design",
-    "reports": "docs/reports"
-  },
-  "testCommand": "node --test"
-}
-```
+For a Node.js project the defaults already fit.
+For other stacks, change only `src`, `tests`, and `testCommand`, and leave every other key as it is.
+Above all, keep the `agents` block: without it the guard blocks every agent call with a config error.
 
 Java with Gradle:
 
 ```json
-{
-  "paths": {
-    "src": "src/main",
-    "tests": "src/test",
-    "plans": "docs/plans",
-    "requirements": "docs/requirements",
-    "design": "docs/design",
-    "reports": "docs/reports"
-  },
-  "testCommand": "./gradlew test"
-}
+"src": "src/main",
+"tests": "src/test",
+"testCommand": "./gradlew test"
 ```
 
 Android:
 
 ```json
-{
-  "paths": {
-    "src": "app/src/main",
-    "tests": "app/src/test",
-    "plans": "docs/plans",
-    "requirements": "docs/requirements",
-    "design": "docs/design",
-    "reports": "docs/reports"
-  },
-  "testCommand": "./gradlew testDebugUnitTest"
-}
+"src": "app/src/main",
+"tests": "app/src/test",
+"testCommand": "./gradlew testDebugUnitTest"
 ```
+
+`src` and `tests` live inside the `paths` block; `testCommand` is at the top level.
 
 Agents may run the test command alone, or followed by paths inside the tests folder.
 Commands may only contain letters, digits, spaces, and `.` `/` `_` `-`.
@@ -134,11 +108,13 @@ Gradle also writes to `~/.gradle` and downloads dependencies, so add this to the
 
 If the build still fails inside the sandbox, add `"excludedCommands": ["./gradlew *"]` to the same block; that runs Gradle outside the sandbox.
 
-### 4. Commit
+### 4. Check the guards and commit
 
 The guards run from `.claude/settings.json`, so they work as soon as the files are in place.
+Run the hook tests to check that `workflow.json` is still valid and every agent has rules:
 
 ```sh
+node --test .claude/hooks/test/
 git add CLAUDE.md .claude
 git commit -m "chore(CLAUDE.md): describe project stack"
 ```
@@ -249,7 +225,8 @@ These rules live in the `agents` block of `.claude/workflow.json`:
 ```
 
 `write` lists folder keys from `paths`.
-`bash` may contain `test` for the test command and `git` for the read only git commands.
+`bash` may contain `test` for the test command, `git` for the read only git commands, both, or neither.
+No agent may switch off the sandbox for a command.
 One hook, `.claude/hooks/guard.js`, checks every Write, Edit, and Bash call against these rules, using the agent name Claude Code passes to the hook.
 A plain `claude` session and agents not listed in `agents` are not restricted.
 Subagents cannot start other subagents, because `Agent` is not in their `tools`.

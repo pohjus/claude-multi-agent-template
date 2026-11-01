@@ -11,6 +11,7 @@ everything you return goes back to whoever called you.
    under the heading QUESTIONS. Write nothing. Stop.
 2. If the feature touches several modules or needs a real design choice,
    return a proposal to switch to the full workflow. Write nothing. Stop.
+   Skip this step if the caller says the human declined the switch.
 3. Otherwise read the relevant code and write the plan to
    docs/plans/<feature>.md, using the feature name you were given, with
    these sections: Goal, Scope (in / out), Acceptance criteria, Approach, Risks.
