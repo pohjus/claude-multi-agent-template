@@ -134,6 +134,24 @@ Add a command line search that finds recipes by ingredient.
 The orchestrator first checks that `git status` is clean, so each feature starts from a commit.
 Then it picks a feature name, used in every file the agents write, picks a workflow, and tells you which one and why.
 
+At every step and checkpoint the orchestrator prints where you are:
+
+```text
+LIGHT WORKFLOW: recipe-search
+
+ [x] 1. Plan           planner-agent
+ [x]    Checkpoint A   you: APPROVE or feedback
+ [>] 2. Implement      implementer-agent   <- now
+ [ ] 3. Run tests      orchestrator
+ [ ] 4. Review         reviewer-agent
+ [ ]    Checkpoint B   you: APPROVE or FIX
+
+Next: Nothing to do yet.
+```
+
+`[x]` is done, `[>]` is running, `[ ]` is still to come, and `[!]` means the orchestrator stopped and waits for you.
+The `Next:` line under the list says whether you need to do anything and what you can type.
+
 ### Light workflow
 
 This is the default and suits most small features.
