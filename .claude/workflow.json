@@ -9,7 +9,7 @@
   },
   "testCommand": "node --test",
   "agents": {
-    "orchestrator": { "write": [], "bash": ["test", "git"] },
+    "orchestrator": { "write": [], "bash": ["test", "git", "commit"] },
     "planner-agent": { "write": ["plans"], "bash": [] },
     "requirements-agent": { "write": ["requirements"], "bash": [] },
     "architect-agent": { "write": ["design"], "bash": [] },
