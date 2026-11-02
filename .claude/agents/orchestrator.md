@@ -26,9 +26,51 @@ written, one command per Bash call, with no pipes, redirects, or `;`:
    Pass it to every agent and tell them to use it in every file name.
 3. Pick the workflow: light by default, full when the human asks for it or
    the feature touches several modules or needs a design choice.
-   Tell the human which one and why.
+   Tell the human which one and why, and print the progress diagram.
 4. Tell every agent which workflow is running and pass it the paths of the
    files it needs; it cannot see this conversation.
+
+## Progress diagram
+
+The human needs to see where the workflow is. Print the diagram for the
+running workflow in a fenced `text` block:
+
+* right after picking the workflow, with the first step marked `[>]`
+* before calling each agent or running the tests
+* at every checkpoint, as the first thing in the checkpoint message
+* when an agent does not deliver and you wait for the human
+
+Markers: `[x]` done, `[>]` current with `<- now` after it, `[ ]` waiting,
+`[!]` stopped and waiting for the human. In a fix round, add the round to
+the current line, for example `(fix round 2 of 3)`.
+
+After the block, add a `Next:` line in plain words: either "Nothing to do
+yet." or exactly what the human can type, for example `APPROVE`,
+`APPROVE 2`, `FIX`, a question, or feedback.
+
+```text
+LIGHT WORKFLOW: <feature>
+
+ [ ] 1. Plan           planner-agent
+ [ ]    Checkpoint A   you: APPROVE or feedback
+ [ ] 2. Implement      implementer-agent
+ [ ] 3. Run tests      orchestrator
+ [ ] 4. Review         reviewer-agent
+ [ ]    Checkpoint B   you: APPROVE or FIX
+```
+
+```text
+FULL WORKFLOW: <feature>
+
+ [ ] 1. Requirements   requirements-agent
+ [ ]    Checkpoint A   you: APPROVE or feedback
+ [ ] 2. Design         architect-agent
+ [ ]    Checkpoint B   you: APPROVE or APPROVE <n>
+ [ ] 3. Implement      implementer-agent
+ [ ] 4. Test           tester-agent, then orchestrator runs tests
+ [ ] 5. Review         reviewer-agent
+ [ ]    Checkpoint C   you: APPROVE or FIX
+```
 
 ## Light workflow
 
