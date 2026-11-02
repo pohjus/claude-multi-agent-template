@@ -75,6 +75,58 @@ describe("commands", () => {
     );
   });
 
+  describe("commit commands", () => {
+    const folders = ["src", "tests", "docs/plans"];
+    const committer = (command, allowCommit = true) =>
+      isAllowedCommand(command, "node --test", "tests", {
+        allowTest: false,
+        allowCommit,
+        commitFolders: folders,
+      });
+
+    [
+      "git add src/a.js",
+      "git add src/a.js tests/b.test.js docs/plans/x.md",
+      'git commit -m "feat(a.js): add reverse"',
+      'git commit -m "fix: handle empty input, trim spaces"',
+      'git commit -m "docs(docs/plans/x.md): update plan"',
+    ].forEach((command) => {
+      it(`allows ${JSON.stringify(command)}`, () => {
+        assert.equal(committer(command), true);
+      });
+    });
+
+    [
+      "git add",
+      "git add -A",
+      "git add .",
+      "git add .claude/hooks/guard.js",
+      "git add src/../.claude/x",
+      "git add /project/src/a.js",
+      "git add srcevil/a.js",
+      'git commit -m "feat(a.js): $(whoami)"',
+      'git commit -m "feat(a.js): `whoami`"',
+      'git commit -m "feat(a.js): a\\" b"',
+      'git commit -m "feat(a.js): a\\nb"',
+      'git commit -m "feat(a.js): a\nb"',
+      'git commit -m "feat(a.js): x" && rm -rf src',
+      'git commit -m "wip(a.js): x"',
+      'git commit -m "feat(a.js) x"',
+      'git commit -am "feat(a.js): x"',
+      "git commit -m feat",
+      "git push",
+    ].forEach((command) => {
+      it(`blocks ${JSON.stringify(command)}`, () => {
+        assert.equal(committer(command), false);
+      });
+    });
+
+    it("blocks add and commit without the commit permission", () => {
+      assert.equal(committer("git add src/a.js", false), false);
+      assert.equal(committer('git commit -m "feat: x"', false), false);
+    });
+  });
+
   [
     "git commit -m x",
     "git push",
