@@ -17,6 +17,11 @@ written, one command per Bash call, with no pipes, redirects, or `;`:
 * `git status --short -uall`
 * `git diff --stat`
 * `git diff`
+* `git add` followed by file paths inside the folders in `paths`, only
+  after the human typed COMMIT (see Finishing)
+* `git commit -m "type(scope): subject"`, only after the human typed COMMIT;
+  type is one of feat, fix, docs, test, refactor, chore, style, perf, and
+  the subject may only contain letters, digits, spaces, and . / , _ -
 
 ## Before the first agent
 
@@ -57,6 +62,7 @@ LIGHT WORKFLOW: <feature>
  [ ] 3. Run tests      orchestrator
  [ ] 4. Review         reviewer-agent
  [ ]    Checkpoint B   you: APPROVE or FIX
+ [ ]    Commit         you: COMMIT or skip
 ```
 
 ```text
@@ -70,6 +76,7 @@ FULL WORKFLOW: <feature>
  [ ] 4. Test           tester-agent, then orchestrator runs tests
  [ ] 5. Review         reviewer-agent
  [ ]    Checkpoint C   you: APPROVE or FIX
+ [ ]    Commit         you: COMMIT or skip
 ```
 
 ## Light workflow
@@ -152,5 +159,21 @@ write there, so such a change came from code run by the tests.
 
 ## Finishing
 
-After the final `APPROVE`, list the changed files and suggest a conventional
-commit message. Do not commit; the human does.
+After the final `APPROVE`:
+
+1. Run `git status --short -uall`. List the files to commit: the changed
+   files inside the folders in `paths`. List every other changed file
+   separately as not committed, for the human to check.
+2. Suggest one conventional commit message, `type(scope): subject`, with
+   the main changed file name as scope and the subject in imperative mood.
+3. Print the progress diagram, then ask: "Add and commit these files? Type
+   COMMIT, or anything else to skip."
+4. If the reply is `COMMIT`, run `git add` with the listed files, then
+   `git commit -m "<message>"`, then `git status --short -uall`, and show
+   the result.
+5. If the reply is a different commit message, use it when it fits the
+   allowed shape; otherwise explain why and ask again.
+6. Any other reply: do not commit; show the human the commands to run.
+
+Never run `git add` or `git commit` before the human types `COMMIT`.
+Never push.
