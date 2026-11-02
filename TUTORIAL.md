@@ -191,6 +191,25 @@ The orchestrator:
 3. chooses the **light workflow**, because this is a small feature, and tells you why;
 4. sends your request to `planner-agent`.
 
+From now on, the orchestrator prints a progress list every time something changes:
+
+```text
+LIGHT WORKFLOW: celsius-to-fahrenheit
+
+ [>] 1. Plan           planner-agent   <- now
+ [ ]    Checkpoint A   you: APPROVE or feedback
+ [ ] 2. Implement      implementer-agent
+ [ ] 3. Run tests      orchestrator
+ [ ] 4. Review         reviewer-agent
+ [ ]    Checkpoint B   you: APPROVE or FIX
+
+Next: Nothing to do yet.
+```
+
+`[x]` means done, `[>]` means running now, and `[ ]` means still to come.
+`[!]` means the orchestrator has stopped and waits for you.
+If you ever feel lost, look at the `Next:` line: it says whether you need to type anything, and what.
+
 ### Checkpoint A: read the plan
 
 The orchestrator stops and shows a summary of the plan.
