@@ -202,6 +202,7 @@ LIGHT WORKFLOW: celsius-to-fahrenheit
  [ ] 3. Run tests      orchestrator
  [ ] 4. Review         reviewer-agent
  [ ]    Checkpoint B   you: APPROVE or FIX
+ [ ]    Commit         you: COMMIT or skip
 
 Next: Nothing to do yet.
 ```
@@ -266,16 +267,22 @@ The reviewer also checks that every `[test]` criterion really has a test.
 
 ### Finishing
 
-After your last `APPROVE`, the orchestrator lists the changed files and suggests a commit message.
-It does not commit for you.
-Look at the changes yourself, run the tests, then commit:
+After your last `APPROVE`, the orchestrator lists the changed files, suggests a commit message, and asks:
+
+```text
+Add and commit these files? Type COMMIT, or anything else to skip.
+```
+
+Before you answer, look at the changes yourself in another terminal:
 
 ```sh
 git diff
 node --test
-git add -A
-git commit -m "feat(convert.js): add celsiusToFahrenheit"
 ```
+
+Type `COMMIT` and the orchestrator runs `git add` and `git commit` for you.
+It never pushes; run `git push` yourself when you want to.
+If you would rather commit by hand, type anything else, for example `skip`, and it shows you the commands.
 
 Congratulations, you built your first feature with a team of agents.
 
@@ -294,7 +301,9 @@ flowchart TD
     run -- pass --> rev[reviewer-agent writes the review]
     rev --> B{{CHECKPOINT B}}
     B -- FIX or change request --> impl
-    B -- APPROVE --> done([Changed files and commit message])
+    B -- APPROVE --> commitq{{COMMIT?}}
+    commitq -- COMMIT --> done([Orchestrator commits the files])
+    commitq -- skip --> manual([You commit yourself])
 ```
 
 ## How to answer a checkpoint
@@ -344,7 +353,9 @@ flowchart TD
     test -- pass --> rev[reviewer-agent writes the review]
     rev --> C{{CHECKPOINT C}}
     C -- FIX or change request --> impl
-    C -- APPROVE --> done([Changed files and commit message])
+    C -- APPROVE --> commitq{{COMMIT?}}
+    commitq -- COMMIT --> done([Orchestrator commits the files])
+    commitq -- skip --> manual([You commit yourself])
 ```
 
 Use the light workflow for most things.
@@ -379,7 +390,7 @@ What each agent may do:
 
 | Agent | May write to | May run |
 | --- | --- | --- |
-| `orchestrator` | nothing | the tests and read only git commands |
+| `orchestrator` | nothing | the tests, read only git commands, and `git add` and `git commit` after you type `COMMIT` |
 | `planner-agent` | `docs/plans` | nothing |
 | `requirements-agent` | `docs/requirements` | nothing |
 | `architect-agent` | `docs/design` | nothing |
