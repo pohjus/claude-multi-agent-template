@@ -145,6 +145,7 @@ LIGHT WORKFLOW: recipe-search
  [ ] 3. Run tests      orchestrator
  [ ] 4. Review         reviewer-agent
  [ ]    Checkpoint B   you: APPROVE or FIX
+ [ ]    Commit         you: COMMIT or skip
 
 Next: Nothing to do yet.
 ```
@@ -188,8 +189,9 @@ Use the full workflow. Add user accounts with login and password reset.
 If tests fail, the failures go back to the implementer and the tests run again.
 After 3 failed fix rounds the orchestrator stops and asks you what to do.
 
-When the workflow is done, the orchestrator lists the changed files and suggests a commit message.
-It does not commit; you do.
+When the workflow is done, the orchestrator lists the changed files, suggests a commit message, and asks whether to add and commit them.
+Type `COMMIT` to let it run `git add` and `git commit`, or anything else to skip and commit yourself.
+It only commits files inside the folders in `paths`, never pushes, and never commits before you type `COMMIT`.
 
 ### Small changes without the workflow
 
@@ -208,6 +210,7 @@ Open the written file if you want the details.
 * A question is answered, and you stay at the checkpoint.
 * Before the last checkpoint, anything else is feedback: the orchestrator sends it to the agent that wrote the file, and you return to the same checkpoint.
 * At the last checkpoint, `FIX` or any change request starts a fix round with the review findings plus your text.
+* After the last `APPROVE`, `COMMIT` adds and commits the listed files with the suggested message; a different message in `type(scope): subject` form replaces it.
   Code changes go to the implementer, test changes go to the tester in the full workflow, and then the tests and the review run again.
 
 An agent may also stop and ask instead of delivering: questions, a proposal to split the feature, a proposal to switch to the full workflow, or a report that a test or the spec is wrong.
@@ -224,7 +227,7 @@ The `[review]` criteria are about code structure, and the reviewer checks them b
 
 | Agent | Writes to | Shell |
 | --- | --- | --- |
-| `orchestrator` | nothing | test command, `git status --short -uall`, `git diff`, `git diff --stat` |
+| `orchestrator` | nothing | test command, `git status --short -uall`, `git diff`, `git diff --stat`, `git add` and `git commit` after you type `COMMIT` |
 | `planner-agent` | `docs/plans` | none |
 | `requirements-agent` | `docs/requirements` | none |
 | `architect-agent` | `docs/design` | none |
@@ -236,14 +239,14 @@ These rules live in the `agents` block of `.claude/workflow.json`:
 
 ```json
 "agents": {
-  "orchestrator": { "write": [], "bash": ["test", "git"] },
+  "orchestrator": { "write": [], "bash": ["test", "git", "commit"] },
   "planner-agent": { "write": ["plans"], "bash": [] },
   "implementer-agent": { "write": ["src", "tests"], "bash": ["test"] }
 }
 ```
 
 `write` lists folder keys from `paths`.
-`bash` may contain `test` for the test command, `git` for the read only git commands, both, or neither.
+`bash` may contain `test` for the test command, `git` for the read only git commands, and `commit` for `git add` with paths inside the `paths` folders and `git commit -m "type(scope): subject"`, in any combination, or nothing.
 No agent may switch off the sandbox for a command.
 One hook, `.claude/hooks/guard.js`, checks every Write, Edit, and Bash call against these rules, using the agent name Claude Code passes to the hook.
 A plain `claude` session and agents not listed in `agents` are not restricted.
