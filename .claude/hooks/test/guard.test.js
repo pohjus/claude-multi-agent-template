@@ -74,6 +74,24 @@ describe("guard", () => {
     assert.match(check(bash("orchestrator", "git commit -m x")), /may only/);
   });
 
+  it("allows add and commit only for an agent with commit", () => {
+    const config = {
+      ...CONFIG,
+      agents: {
+        ...CONFIG.agents,
+        orchestrator: { write: [], bash: ["test", "git", "commit"] },
+      },
+    };
+    const run = (agent, command) =>
+      findViolation(bash(agent, command), config, PROJECT);
+    const commit = 'git commit -m "feat(a.js): add x"';
+    assert.equal(run("orchestrator", "git add src/a.js"), null);
+    assert.equal(run("orchestrator", commit), null);
+    assert.match(run("orchestrator", "git add -A"), /may only run/);
+    assert.match(run("implementer-agent", commit), /may only run/);
+    assert.match(check(bash("orchestrator", commit)), /may only run/);
+  });
+
   it("does not restrict the main session or unknown agents", () => {
     assert.equal(check(write(undefined, "/etc/hosts")), null);
     assert.equal(check(write("Explore", "/etc/hosts")), null);

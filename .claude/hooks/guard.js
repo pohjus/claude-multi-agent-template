@@ -22,17 +22,24 @@ const checkWrite = (input, rules, config, projectDir) => {
   );
 };
 
-const describeAllowed = (allowTest, allowGit, config, testDir) => {
-  const options = [];
-  if (allowTest) {
-    options.push(
+const describeAllowed = (options, config, testDir) => {
+  const commands = [];
+  if (options.allowTest) {
+    commands.push(
       `"${config.testCommand}", optionally with paths inside ${testDir}/`,
     );
   }
-  if (allowGit) {
-    options.push(...GIT_READ_COMMANDS.map((command) => `"${command}"`));
+  if (options.allowGit) {
+    commands.push(...GIT_READ_COMMANDS.map((command) => `"${command}"`));
   }
-  return options.join(", or ");
+  if (options.allowCommit) {
+    const folders = options.commitFolders.join(", ");
+    commands.push(
+      `"git add" with paths inside ${folders}`,
+      `'git commit -m "type(scope): subject"'`,
+    );
+  }
+  return commands.join(", or ");
 };
 
 const checkBash = (input, rules, config) => {
@@ -44,14 +51,17 @@ const checkBash = (input, rules, config) => {
     return "commands may not disable the sandbox. Report this to the caller.";
   }
   const [testDir] = resolveFolders(config, ["tests"]);
-  const allowTest = allowed.includes("test");
-  const allowGit = allowed.includes("git");
   const command = input.tool_input?.command ?? "";
-  const options = { allowTest, allowGit };
+  const options = {
+    allowTest: allowed.includes("test"),
+    allowGit: allowed.includes("git"),
+    allowCommit: allowed.includes("commit"),
+    commitFolders: resolveFolders(config, Object.keys(config.paths ?? {})),
+  };
   if (isAllowedCommand(command, config.testCommand, testDir, options)) {
     return null;
   }
-  const allowedText = describeAllowed(allowTest, allowGit, config, testDir);
+  const allowedText = describeAllowed(options, config, testDir);
   return (
     `you may only run ${allowedText}. One command per call; only letters, ` +
     "digits, spaces, and . / _ - are allowed."
